@@ -1,0 +1,88 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+from json import dumps as dump_to_json
+
+# System Imports
+from os import getenv
+from pathlib import PurePath
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
+from wsgiref.simple_server import make_server
+
+from paho.mqtt.client import MQTTv311
+from paho.mqtt.publish import single as send_mqtt_message
+
+# Local Imports
+from python_logger import create_logger
+
+LOGGER = create_logger(PurePath(__file__).stem)
+
+MQTT_SERVER = getenv("MQTT_SERVER", "localhost")
+MQTT_SERVER_PORT = int(getenv("MQTT_SERVER_PORT", "1883"))
+MQTT_USERNAME = getenv("MQTT_USERNAME", None)
+MQTT_PASSWORD = getenv("MQTT_PASSWORD", None)
+
+AUTH_DICT = None
+if MQTT_USERNAME and MQTT_PASSWORD:
+    AUTH_DICT = {"username": MQTT_USERNAME, "password": MQTT_PASSWORD}
+
+
+def convert_value(value):
+    if len(value) == 1:
+        return value[0]
+    return value
+
+
+def listener(environ, start_response):
+    if "AMBWeather" in environ["PATH_INFO"]:
+        data_dict = parse_qs("http://" + environ["HTTP_HOST"] + environ["PATH_INFO"])
+
+        # cleanup the data
+        keys_list = list(data_dict.keys())
+        for key in keys_list:
+            if "/" in key:
+                value = convert_value(data_dict[key])
+                newkey = key[key.rfind("/") + 1 :]
+
+                data_dict.pop(key)
+                data_dict[newkey] = value
+            else:
+                data_dict[key] = convert_value(data_dict[key])
+
+        json_payload = dump_to_json(data_dict)
+        LOGGER.info(f"MQTT payload {json_payload}")
+
+        send_mqtt_message(
+            "weather",
+            payload=json_payload,
+            qos=0,
+            retain=False,
+            hostname=MQTT_SERVER,
+            port=MQTT_SERVER_PORT,
+            client_id="",
+            keepalive=60,
+            will=None,
+            auth=AUTH_DICT,
+            tls=None,
+            protocol=MQTTv311,
+            transport="tcp",
+        )
+
+        # let the Weather Station know we're actually running correctly
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        response_body = ""
+        return [response_body.encode()]
+
+    start_response("400 Bad Request", [("Content-Type", "text/plain")])
+    response_body = ""
+    return [response_body.encode()]
+
+
+def main():
+    httpd = make_server("", 80, listener)
+    httpd.serve_forever()
+
+
+if __name__ == "__main__":
+    main()
