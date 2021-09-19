@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from datetime import datetime
+from datetime import timezone
 from json import dumps as dump_to_json
 
 # System Imports
@@ -50,14 +52,19 @@ def listener(environ, start_response):
             else:
                 data_dict[key] = convert_value(data_dict[key])
 
-        dateutc = data_dict.pop("dateutc")
+        utc = datetime.strptime(data_dict.pop("dateutc"), "%Y-%m-%d %H:%M:%S")
+        utc = utc.replace(tzinfo=timezone.utc)
+        local_time = utc.astimezone()
 
+        time_string_payload = local_time.strftime("%Y-%m-%d %H:%M:%S")
         json_payload = dump_to_json(data_dict)
+
+        LOGGER.info(f"MQTT payload {time_string_payload}")
         LOGGER.info(f"MQTT payload {json_payload}")
 
         send_mqtt_message(
             "weather",
-            payload=dateutc,
+            payload=time_string_payload,
             qos=0,
             retain=False,
             hostname=MQTT_SERVER,
