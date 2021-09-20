@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 from wsgiref.simple_server import make_server
 
 from paho.mqtt.client import MQTTv311
-from paho.mqtt.publish import single as send_mqtt_message
+from paho.mqtt.publish import single as single_mqtt_message
 
 # Local Imports
 from python_logger import create_logger
@@ -34,6 +34,27 @@ def convert_value(value):
     if len(value) == 1:
         return value[0]
     return value
+
+
+def send_mqtt_message(topic, payload_value):
+
+    LOGGER.info(f"MQTT {topic} payload {payload_value}")
+
+    single_mqtt_message(
+        topic,
+        payload=payload_value,
+        qos=0,
+        retain=True,
+        hostname=MQTT_SERVER,
+        port=MQTT_SERVER_PORT,
+        client_id="",
+        keepalive=60,
+        will=None,
+        auth=AUTH_DICT,
+        tls=None,
+        protocol=MQTTv311,
+        transport="tcp",
+    )
 
 
 def listener(environ, start_response):
@@ -59,40 +80,8 @@ def listener(environ, start_response):
         time_string_payload = local_time.strftime("%Y-%m-%d %H:%M:%S")
         json_payload = dump_to_json(data_dict)
 
-        LOGGER.info(f"MQTT payload {time_string_payload}")
-        LOGGER.info(f"MQTT payload {json_payload}")
-
-        send_mqtt_message(
-            "weather",
-            payload=time_string_payload,
-            qos=0,
-            retain=False,
-            hostname=MQTT_SERVER,
-            port=MQTT_SERVER_PORT,
-            client_id="",
-            keepalive=60,
-            will=None,
-            auth=AUTH_DICT,
-            tls=None,
-            protocol=MQTTv311,
-            transport="tcp",
-        )
-
-        send_mqtt_message(
-            "weather/attributes",
-            payload=json_payload,
-            qos=0,
-            retain=False,
-            hostname=MQTT_SERVER,
-            port=MQTT_SERVER_PORT,
-            client_id="",
-            keepalive=60,
-            will=None,
-            auth=AUTH_DICT,
-            tls=None,
-            protocol=MQTTv311,
-            transport="tcp",
-        )
+        send_mqtt_message("weather", time_string_payload)
+        send_mqtt_message("weather/attributes", json_payload)
 
         # let the Weather Station know we're actually running correctly
         start_response("200 OK", [("Content-Type", "text/plain")])
