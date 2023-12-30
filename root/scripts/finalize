@@ -37,7 +37,6 @@ def convert_value(value):
 
 
 def send_mqtt_message(topic, payload_value):
-
     LOGGER.info(f"MQTT {topic} payload {payload_value}")
 
     single_mqtt_message(

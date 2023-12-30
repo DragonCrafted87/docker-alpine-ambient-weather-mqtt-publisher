@@ -1,11 +1,6 @@
 #!/bin/bash
 
-docker build \
-        --no-cache \
-        --pull \
-        --file Dockerfile \
-        --tag weather \
-        .
+bash build.sh
 
 MSYS_NO_PATHCONV=1 \
     docker run -it \
