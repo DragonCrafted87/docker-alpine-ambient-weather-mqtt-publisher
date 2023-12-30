@@ -19,8 +19,10 @@ RUN ash <<eot
 
     apk add --no-cache --update
 
-    pip3 --no-cache-dir install \
-        paho-mqtt \
+    pip3 --no-cache-dir \
+        install \
+            --break-system-packages \
+            paho-mqtt \
 
     rm -rf /tmp/*
     rm -rf /var/cache/apk/*
