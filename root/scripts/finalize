@@ -9,14 +9,16 @@ from json import dumps as dump_to_json
 from os import getenv
 from pathlib import PurePath
 from urllib.parse import parse_qs
-from urllib.parse import urlparse
 from wsgiref.simple_server import make_server
 
+# pylint: disable=import-error
 from paho.mqtt.client import MQTTv311
 from paho.mqtt.publish import single as single_mqtt_message
 
 # Local Imports
 from python_logger import create_logger
+
+# pylint: enable=import-error
 
 LOGGER = create_logger(PurePath(__file__).stem)
 

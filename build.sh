@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 docker build \
-    --tag dragoncrafted87/alpine-ambient-weather-mqtt-publisher \
+    --platform linux/amd64,linux/arm64 \
+    --tag ghcr.io/dragoncrafted87/alpine-ambient-weather-mqtt-publisher \
     .

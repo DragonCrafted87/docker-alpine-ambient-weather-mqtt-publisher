@@ -1,3 +1,3 @@
 # docker-alpine-ambient-weather-mqtt-publisher
 
-Protocl Spec is at <https://help.ambientweather.net/help/advanced/>
+Protocol Spec is at <https://help.ambientweather.net/help/advanced/>
